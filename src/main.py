@@ -14,9 +14,9 @@ import re
 def sanitize_vid_title(name):
     name = name.replace("TAB", "")
     name = name.replace("- Fingerstyle Lesson", "")
-    name = name.strip()
     name = re.sub(r"[\d\+\#]+", "", name)
     name = re.sub(" +", " ", name)
+    name = name.strip()
     return name
 
 
@@ -70,10 +70,10 @@ if __name__ == "__main__":
             img_tab = img[-int(img.shape[0] * 0.4):]
 
         black_pixels = np.all(img_tab <= 10, axis=2).sum()
-        print(f"frame {frame}, black pixels {black_pixels}")
+        print(f"Frame {frame:<4}: black pixels {black_pixels}")
         if black_pixels <= 50000:
             start_frame = frame
-            print(f"found start frame at {start_frame}")
+            print(f"Found start frame at {start_frame}")
             break
 
     if start_frame is None:
@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
         if prev_img is not None:
             diff = np.linalg.norm((prev_img - img).flatten() / 255, ord=1)
-            print(f"avg difference {diff}")
+            print(f"Frame {frame:<4}: avg difference {diff:.2f}")
             if diff >= 100000:
                 # the first hit is when the "hands" start disappearing
                 # so we need to skip forward
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # main loop
     for frame in itertools.count(start=hand_frame, step=20):
         # cooldown adding frames
-        if frame <= sheet_frames[-1] + 200:
+        if frame <= sheet_frames[-1] + 120:
             continue
 
         vidcap.set(1, frame)
@@ -137,14 +137,16 @@ if __name__ == "__main__":
         img = img[:, :, ::-1]
 
         img_left = img[:, :int(img.shape[1] * 0.2)].copy()
-        mask_0 = img_left[:, :, 2] >= img_left[:, :, 0]
-        mask_1 = img_left[:, :, 2] >= img_left[:, :, 1]
+        mask_0 = img_left[:, :, 2] > img_left[:, :, 0]
+        mask_1 = img_left[:, :, 2] > img_left[:, :, 1]
         mask_2 = np.all(img_left > 10, axis=2)
         mask = np.all(np.stack([mask_0, mask_1, mask_2], axis=2), axis=2)
         blue_pixels = mask.sum()
-        print(f"frame {frame}, blue pixels {blue_pixels}")
+        print(f"Frame {frame:<4}: blue pixels {blue_pixels}")
 
-        if blue_pixels >= 10000:
+        if blue_pixels >= 8000:
+            # pil_handle = Image.fromarray(img, mode="RGB")
+            # pil_handle.show()
             sheet_frames.append(frame)
 
             # manual override of number of lines
@@ -152,7 +154,8 @@ if __name__ == "__main__":
                 break
 
     print("Done parsing")
-    print("Saving")
+    print(f"Saving {len(sheet_frames)} lines")
+
     img_data = []
     for frame_i, frame in enumerate(sheet_frames):
         vidcap.set(1, frame)
