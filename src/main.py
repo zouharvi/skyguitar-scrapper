@@ -27,8 +27,8 @@ if __name__ == "__main__":
         help="link to the YouTube video you want to scrap tabs from"
     )
     args.add_argument(
-        "--count", "-c", type=int, default=None,
-        help="how many sheet lines to take (top crop)"
+        "--omit", type=int, nargs="+", default=[],
+        help="indicies of lines to omit"
     )
     args.add_argument(
         "--tab-up", action="store_true",
@@ -115,7 +115,9 @@ if __name__ == "__main__":
     if hand_frame is None:
         print("Couldn't find the frame when hands disappear")
         exit()
-    sheet_frames.append(hand_frame)
+    
+    if 0 not in args.omit:
+        sheet_frames.append(hand_frame)
 
     # main loop
     for frame in itertools.count(start=hand_frame, step=20):
@@ -130,9 +132,9 @@ if __name__ == "__main__":
 
         # crop and normalize
         if args.tab_up:
-            img = img[:int(img.shape[0] * 0.4)]
+            img = img[:int(img.shape[0] * 0.35)]
         else:
-            img = img[-int(img.shape[0] * 0.4):]
+            img = img[-int(img.shape[0] * 0.35):]
         # transform BGR to RGB
         img = img[:, :, ::-1]
 
@@ -149,15 +151,14 @@ if __name__ == "__main__":
             # pil_handle.show()
             sheet_frames.append(frame)
 
-            # manual override of number of lines
-            if len(sheet_frames) == args.count:
-                break
-
     print("Done parsing")
     print(f"Saving {len(sheet_frames)} lines")
 
     img_data = []
     for frame_i, frame in enumerate(sheet_frames):
+        if frame_i+1 in args.omit:
+            continue
+
         vidcap.set(1, frame)
         success, img = vidcap.read()
         if not success:

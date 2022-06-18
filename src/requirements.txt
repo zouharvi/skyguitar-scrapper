@@ -1,3 +1,4 @@
-pytube >= 12
-numpy
-cv2
+pytube >= 12.1
+numpy >= 1.21
+cv2 >= 4.6
+Pillow >= 9.0
