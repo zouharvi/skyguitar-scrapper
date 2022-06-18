@@ -1,0 +1,3 @@
+pytube >= 12
+numpy
+cv2
