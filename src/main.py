@@ -31,6 +31,18 @@ if __name__ == "__main__":
         help="indicies of lines to omit"
     )
     args.add_argument(
+        "--frame-start", type=int, default=1000,
+        help="which video to start from"
+    )
+    args.add_argument(
+        "--i-start", type=int, default=0,
+        help="which line to start from"
+    )
+    args.add_argument(
+        "--i-end", type=int, default=None,
+        help="which line to end with"
+    )
+    args.add_argument(
         "--tab-up", action="store_true",
         help="usually the tabs are in the bottom half but sometimes in the upper half (yellow vids)"
     )
@@ -57,7 +69,7 @@ if __name__ == "__main__":
     vidcap = cv2.VideoCapture(new_path)
     start_frame = None
 
-    for frame in itertools.count(start=1000, step=20):
+    for frame in itertools.count(start=args.frame_start, step=20):
         vidcap.set(1, frame)
         success, img = vidcap.read()
         if not success:
@@ -85,7 +97,7 @@ if __name__ == "__main__":
 
     # find when hands disappear
     prev_img = None
-    for frame in range(start_frame, start_frame + 500, 20):
+    for frame in range(start_frame, start_frame + 1000, 20):
         vidcap.set(1, frame)
         success, img = vidcap.read()
         if not success:
@@ -115,14 +127,14 @@ if __name__ == "__main__":
     if hand_frame is None:
         print("Couldn't find the frame when hands disappear")
         exit()
-    
-    if 0 not in args.omit:
+
+    if 0 not in args.omit and args.i_start <= 1:
         sheet_frames.append(hand_frame)
 
     # main loop
     for frame in itertools.count(start=hand_frame, step=20):
         # cooldown adding frames
-        if frame <= sheet_frames[-1] + 120:
+        if len(sheet_frames) != 0 and frame <= sheet_frames[-1] + 120:
             continue
 
         vidcap.set(1, frame)
@@ -156,7 +168,7 @@ if __name__ == "__main__":
 
     img_data = []
     for frame_i, frame in enumerate(sheet_frames):
-        if frame_i+1 in args.omit:
+        if frame_i + 1 in args.omit or frame_i + 1 < args.i_start - 1 or (args.i_end is not None and frame_i + 1 > args.i_end):
             continue
 
         vidcap.set(1, frame)
