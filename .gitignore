@@ -1,5 +1,7 @@
 # added by zouharvi
 videos
+*.mp4
+tmp_out
 
 # python
 __pycache__
